@@ -1,0 +1,6 @@
+PyQt5
+pyperclip
+zxcvbn
+fastapi
+uvicorn
+pyinstaller
