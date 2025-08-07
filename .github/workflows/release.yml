@@ -1,5 +1,3 @@
-# .github/workflows/release.yml
-
 name: Build and Release
 
 on:
@@ -11,24 +9,27 @@ jobs:
   build_and_release:
     name: Build on ${{ matrix.os }} with Python ${{ matrix.python-version }}
 
+    permissions:
+      contents: write
+
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: windows-2022
             python-version: '3.8'
-            asset_name: Safe_Code-win64.zip
-            executable_name: Safe_Code.exe
+            asset_name: KeyWeaver-win64.zip
+            executable_name: KeyWeaver.exe
 
           - os: ubuntu-latest
             python-version: '3.10'
-            asset_name: Safe_Code-linux64.tar.gz
-            executable_name: Safe_Code
+            asset_name: KeyWeaver-linux64.tar.gz
+            executable_name: KeyWeaver
 
           - os: macos-latest
             python-version: '3.10'
-            asset_name: Safe_Code-macos.zip
-            executable_name: Safe_Code
+            asset_name: KeyWeaver-macos.zip
+            executable_name: KeyWeaver
 
     steps:
       - name: Checkout repository code
@@ -46,22 +47,17 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --name Safe_Code --onefile --windowed --icon=logo.ico --add-data "logo.ico:." main.py
+          pyinstaller --name ${{ matrix.executable_name }} --onefile --windowed --icon=logo.ico --add-data "logo.ico:." main.py
 
       - name: Package artifacts for release
         run: |
-          # The logic is now simpler: just package the executable itself.
-          # The icon is already bundled inside it.
           if [ "${{ matrix.os }}" == "macos-latest" ]; then
-            # On macOS, zip the entire .app bundle.
-            zip -r ../${{ matrix.asset_name }} dist/Safe_Code.app
+            zip -r ../${{ matrix.asset_name }} dist/${{ matrix.executable_name }}.app
           elif [ "${{ matrix.os }}" == "windows-2022" ]; then
-            # On Windows, enter the dist folder and zip the .exe.
             cd dist
             7z a ../${{ matrix.asset_name }} ${{ matrix.executable_name }}
             cd ..
           else
-            # On Linux, enter the dist folder and tar the executable.
             cd dist
             tar -czvf ../${{ matrix.asset_name }} ${{ matrix.executable_name }}
             cd ..
