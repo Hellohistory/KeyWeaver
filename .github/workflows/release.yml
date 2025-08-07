@@ -1,0 +1,70 @@
+# .github/workflows/release.yml
+
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build_and_release:
+    name: Build on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+            python-version: '3.8'
+            asset_name: Safe_Code-win64.zip
+            executable_name: Safe_Code.exe
+
+          - os: ubuntu-latest
+            python-version: '3.10'
+            asset_name: Safe_Code-linux64.tar.gz
+            executable_name: Safe_Code
+
+          - os: macos-latest
+            python-version: '3.10'
+            asset_name: Safe_Code-macos.zip
+            executable_name: Safe_Code
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --name Safe_Code --onefile --windowed --icon=logo.ico --add-data "logo.ico:." main.py
+
+      - name: Package artifacts for release
+        run: |
+          # 进入 PyInstaller 生成的 dist 目录
+          cd dist
+          if [ "${{ matrix.os }}" == "windows-2022" ]; then
+            7z a ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+            zip ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
+          else
+            tar -czvf ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
+          fi
+          cd ..
+        shell: bash
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.asset_name }}
+          generate_release_notes: true
