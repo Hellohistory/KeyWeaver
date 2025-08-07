@@ -4,3 +4,4 @@ zxcvbn
 fastapi
 uvicorn
 pyinstaller
+Pillow
