@@ -50,16 +50,22 @@ jobs:
 
       - name: Package artifacts for release
         run: |
-          # 进入 PyInstaller 生成的 dist 目录
-          cd dist
-          if [ "${{ matrix.os }}" == "windows-2022" ]; then
-            7z a ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
-          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-            zip ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
+          # The logic is now simpler: just package the executable itself.
+          # The icon is already bundled inside it.
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+            # On macOS, zip the entire .app bundle.
+            zip -r ../${{ matrix.asset_name }} dist/Safe_Code.app
+          elif [ "${{ matrix.os }}" == "windows-2022" ]; then
+            # On Windows, enter the dist folder and zip the .exe.
+            cd dist
+            7z a ../${{ matrix.asset_name }} ${{ matrix.executable_name }}
+            cd ..
           else
-            tar -czvf ../${{ matrix.asset_name }} ${{ matrix.executable_name }} logo.ico
+            # On Linux, enter the dist folder and tar the executable.
+            cd dist
+            tar -czvf ../${{ matrix.asset_name }} ${{ matrix.executable_name }}
+            cd ..
           fi
-          cd ..
         shell: bash
 
       - name: Create Release and Upload Assets
