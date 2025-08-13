@@ -48,20 +48,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install cx_Freeze
           pip install -r requirements.txt
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y libxkbcommon-x11-0
-          fi
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-x11-0
 
       - name: Get version from tag
         run: |
           VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
+        shell: bash
 
       - name: Build executable with cx_Freeze
         run: |
@@ -72,6 +75,7 @@ jobs:
           else
             python setup.py build
           fi
+        shell: bash
 
       - name: Prepare artifact for release
         shell: bash
@@ -85,7 +89,7 @@ jobs:
             BUILD_DIR=$(find build -maxdepth 1 -type d -name "exe.*")
             mv ${BUILD_DIR}/* ./${ARTIFACT_DIR}/
           fi
-
+          
           echo "ARTIFACT_DIR=${ARTIFACT_DIR}" >> $GITHUB_ENV
 
 
