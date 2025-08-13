@@ -21,7 +21,6 @@ include_files = [
     'logo.png',
     'logo.ico',
     'logo.icns',
-    'LICENSE'
 ]
 
 packages = ["PyQt5", "fastapi", "uvicorn", "zxcvbn", "pyperclip", "asyncio"]
@@ -30,6 +29,9 @@ packages = ["PyQt5", "fastapi", "uvicorn", "zxcvbn", "pyperclip", "asyncio"]
 build_exe_options = {
     "packages": packages,
     "include_files": include_files,
+    "excludes": [
+        "PyQt5.QtQml", "PyQt5.QtQuick"
+    ],
 }
 
 bdist_mac_options = {
