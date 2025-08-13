@@ -4,6 +4,7 @@ from cx_Freeze import setup, Executable
 
 VERSION = os.environ.get('CI_VERSION', '0.0.0')
 
+# 根据平台选择图标和基础配置
 if sys.platform == "darwin":
     icon_path = "logo.icns"
     base = None
@@ -29,8 +30,11 @@ packages = ["PyQt5", "fastapi", "uvicorn", "zxcvbn", "pyperclip", "asyncio"]
 build_exe_options = {
     "packages": packages,
     "include_files": include_files,
+
     "excludes": [
-        "PyQt5.QtQml", "PyQt5.QtQuick"
+        "PyQt5.QtQml",
+        "PyQt5.QtQuick",
+        "PyQt5.QtSql"
     ],
 }
 
