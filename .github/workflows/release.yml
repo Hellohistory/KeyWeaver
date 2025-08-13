@@ -19,18 +19,6 @@ jobs:
             python-version: '3.8'
             platform_id: 'win-amd64'
 
-          - os: ubuntu-latest
-            python-version: '3.10'
-            platform_id: 'linux-x86_64'
-
-          - os: macos-13
-            python-version: '3.10'
-            platform_id: 'macos-x86_64'
-
-          - os: macos-latest
-            python-version: '3.10'
-            platform_id: 'macos-arm64'
-
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
@@ -40,18 +28,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install cx_Freeze
           pip install -r requirements.txt
         shell: bash
-
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxkbcommon-x11-0
 
       - name: Get version from tag
         run: |
@@ -62,12 +45,7 @@ jobs:
       - name: Build executable with cx_Freeze
         run: |
           export CI_VERSION=${{ env.VERSION }}
-          
-          if [ "${{ runner.os }}" == "macOS" ]; then
-            python setup.py bdist_mac
-          else
-            python setup.py build
-          fi
+          python setup.py build
         shell: bash
 
       - name: Prepare artifact for release
@@ -76,26 +54,16 @@ jobs:
           ARTIFACT_DIR="KeyWeaver-${{ env.VERSION }}-${{ matrix.platform_id }}"
           mkdir -p ${ARTIFACT_DIR}
 
-          if [ "${{ runner.os }}" == 'macOS' ]; then
-            mv dist/KeyWeaver.app ./${ARTIFACT_DIR}/
-          else
-            BUILD_DIR=$(find build -maxdepth 1 -type d -name "exe.*")
-            mv ${BUILD_DIR}/* ./${ARTIFACT_DIR}/
-          fi
+          BUILD_DIR=$(find build -maxdepth 1 -type d -name "exe.*")
+          mv ${BUILD_DIR}/* ./${ARTIFACT_DIR}/
           
           echo "ARTIFACT_DIR=${ARTIFACT_DIR}" >> $GITHUB_ENV
-
 
       - name: Create release archive
         shell: bash
         run: |
-          if [ "${{ runner.os }}" == 'Windows' ]; then
-            7z a "${{ env.ARTIFACT_DIR }}.zip" "./${{ env.ARTIFACT_DIR }}"
-            echo "ASSET_PATH=${{ env.ARTIFACT_DIR }}.zip" >> $GITHUB_ENV
-          else
-            tar -czvf "${{ env.ARTIFACT_DIR }}.tar.gz" "${{ env.ARTIFACT_DIR }}"
-            echo "ASSET_PATH=${{ env.ARTIFACT_DIR }}.tar.gz" >> $GITHUB_ENV
-          fi
+          7z a "${{ env.ARTIFACT_DIR }}.zip" "./${{ env.ARTIFACT_DIR }}"
+          echo "ASSET_PATH=${{ env.ARTIFACT_DIR }}.zip" >> $GITHUB_ENV
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
